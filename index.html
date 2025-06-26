@@ -19,6 +19,17 @@
       0%, 100% { opacity: 1; }
       50% { opacity: .5; }
     }
+    /* 말풍선 스타일 */
+    .speech-bubble-paragraph {
+      border-radius: 0.75rem; /* 더 둥근 모서리 */
+      padding: 1rem;
+      margin-bottom: 0.75rem; /* 말풍선 사이 간격 */
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 은은한 그림자 */
+      line-height: 1.6; /* 줄 간격 */
+    }
+    .speech-bubble-paragraph:last-child {
+      margin-bottom: 0; /* 마지막 말풍선은 하단 마진 없음 */
+    }
   </style>
 </head>
 <body>
@@ -31,98 +42,60 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <script type="text/babel">
-    // Firebase 관련 전역 변수들은 GitHub Pages 환경에서 직접 사용할 수 없습니다.
-    // 하지만 코드 구조 유지를 위해 변수 선언은 유지합니다.
-    // 실제 Firebase 연동을 위해서는 별도의 Firebase 프로젝트 설정 및 SDK 초기화가 필요합니다.
-    // 현재는 기능 상으로 사용되지 않으므로, 아래 선언은 안전하게 유지됩니다.
-    const __app_id = 'imjin-war-geopolitics-app'; // GitHub에서는 고정된 값 사용
-    const __firebase_config = '{}'; // Firebase config는 이 환경에서 사용되지 않음
-    const __initial_auth_token = null; // 초기 인증 토큰도 이 환경에서 사용되지 않음
+    // Firebase related global variables are not directly usable in a GitHub Pages environment.
+    // However, they are kept for code structure consistency.
+    // For actual Firebase integration, separate Firebase project setup and SDK initialization are required.
+    // As they are not functionally used here, these declarations are safely maintained.
+    const __app_id = 'imjin-war-geopolitics-app'; // Using a fixed value for GitHub
+    const __firebase_config = '{}'; // Firebase config not used in this environment
+    const __initial_auth_token = null; // Initial auth token not used in this environment
 
 
     function App() {
       const [loading, setLoading] = React.useState(false);
-      const [geoInfo, setGeoInfo] = React.useState({ japan: [], ming: [] }); // 변경: 배열로 받도록
+      const [geoInfo, setGeoInfo] = React.useState({ japan: [], ming: [] }); // Modified to receive arrays
       const [currentQuizQuestion, setCurrentQuizQuestion] = React.useState(0);
       const [selectedAnswer, setSelectedAnswer] = React.useState(null);
       const [quizFeedback, setQuizFeedback] = React.useState('');
       const [showQuizResult, setShowQuizResult] = React.useState(false);
 
-      // Firebase 설정 (GitHub Pages에서는 직접 연결되지 않음)
+      // Firebase setup (not directly connected in GitHub Pages)
       const [db, setDb] = React.useState(null);
       const [auth, setAuth] = React.useState(null);
       const [userId, setUserId] = React.useState(null);
       const [isAuthReady, setIsAuthReady] = React.useState(false);
 
       React.useEffect(() => {
-        // GitHub Pages 환경에서는 Firebase 초기화가 실제 동작하지 않으므로,
-        // 더미 데이터를 설정하여 앱이 실행되도록 합니다.
-        // 실제 Firebase 연동을 위해서는 Firebase SDK를 npm으로 설치하고
-        // 빌드 과정을 거쳐야 합니다.
+        // In the GitHub Pages environment, Firebase initialization does not directly function.
+        // Therefore, dummy data is set to allow the app to run.
+        // For actual Firebase integration, Firebase SDK would need to be installed via npm and built.
         console.log("Firebase initialization does not work directly in GitHub Pages environment.");
         setDb({}); // Dummy object
         setAuth({}); // Dummy object
         setUserId('guest-user-github'); // Dummy user ID
         setIsAuthReady(true);
+
+        // Populate geoInfo with static data immediately on component mount
+        setGeoInfo({
+          japan: [
+            "일본은 100년 넘게 여러 영주들이 서로 싸우던 '전국 시대'라는 혼란스러운 시간을 보내고 있었어요. 마치 여러 왕들이 자기 땅을 더 넓히려고 계속 싸우는 시기였죠.",
+            "이 긴 싸움을 '도요토미 히데요시'라는 아주 힘세고 똑똑한 장군이 마침내 끝내고 일본을 하나의 나라로 통일했어요. 히데요시는 이제 일본에서 가장 높은 자리에 오르게 되었답니다.",
+            "나라를 통일하는 과정에서 많은 병사들이 전쟁만 했기 때문에, 히데요시는 이 병사들의 불만을 잠재우고 새로운 목표를 주고 싶었어요. 또한, 그의 넘치는 힘과 야망을 다른 나라에 보여주고 싶어 했죠.",
+            "그래서 히데요시는 아주 큰 꿈을 꾸게 됩니다. 바로 일본을 넘어 중국의 '명나라'까지 정복하는 것이었어요. 당시 명나라는 아시아에서 가장 강력한 나라였답니다.",
+            "하지만 일본에서 명나라로 가려면 꼭 조선을 지나가야만 했어요. 히데요시는 조선에 길을 비켜달라고 요구했지만, 조선은 이를 단호히 거절했어요. 조선은 일본이 중국까지 가는 길을 열어주면 자신들도 위험해질 수 있다고 생각했거든요.",
+            "조선의 거절에 화가 난 히데요시는 결국 1592년에 대규모 군대를 이끌고 조선을 침략하게 됩니다. 이것이 바로 '임진왜란'의 가장 중요한 시작 이유 중 하나였어요."
+          ],
+          ming: [
+            "명나라는 당시 동아시아에서 가장 크고 오래된 제국이었어요. 중국을 다스리는 아주 강력한 나라였죠. 오랫동안 주변 나라들에게 큰 영향을 미치고 있었답니다.",
+            "하지만 명나라는 겉으로는 강해 보였지만, 속으로는 여러 가지 어려운 문제들로 몸살을 앓고 있었어요. 황제들은 나라의 살림을 잘 돌보지 않아 정치가 혼란스러웠고, 높은 관리들 사이에 다툼도 심했어요.",
+            "가장 큰 문제는 '재정'이었어요. 나라에 돈이 부족해서 군사들을 제대로 돌보지 못하고, 백성들을 위한 정책도 펼치기 어려웠죠. 게다가 농사를 지을 땅도 부족해지고, 자연재해까지 겹쳐 백성들의 삶이 매우 힘들었어요.",
+            "백성들은 먹고살기 힘들어지자 여기저기서 반란을 일으키기 시작했고, 북쪽 국경에서는 '여진족'이라는 새로운 세력이 강해져 명나라를 계속 괴롭혔어요. 바다에서는 '왜구'들이 나타나 마을을 약탈하고 백성들을 힘들게 했죠.",
+            "이런 국내외의 많은 문제들을 해결하느라 명나라는 이미 많은 힘과 돈을 쓰고 군사력이 약해지고 있었답니다.",
+            "일본이 조선을 침략하자, 명나라는 처음에는 조선을 돕는 것에 대해 고민이 많았어요. 하지만 일본이 조선을 정복하고 더 강해지면, 다음 목표가 바로 명나라 자신이 될 수도 있다고 생각했죠.",
+            "그래서 명나라는 자신들의 안전을 지키고, 오랫동안 지켜온 동아시아의 질서를 유지하기 위해 결국 조선을 도와주기로 결정하고 대규모 군대를 조선에 보냈답니다. 명나라가 임진왜란에 참전한 것은 자신들의 나라를 지키기 위한 중요한 선택이었어요."
+          ]
+        });
       }, []);
-
-      // Function to call Gemini API for historical context
-      const getHistoricalContext = async (country) => {
-        setLoading(true);
-        let chatHistory = [];
-        // Enhanced prompt to explain political, social, and economic situations just before the Imjin War at an elementary school level,
-        // focusing on why they were involved or affected by the war with Joseon,
-        // and using simple, short sentences. Brief mention of key figures or interesting events is welcome.
-        // Each sentence should be separated into a new paragraph.
-        const prompt = `초등학생 수준으로 임진왜란 직전의 ${country}의 정치, 사회, 경제 상황을 아주 쉽고 재미있게 설명해주세요. 왜 그들이 조선과의 전쟁에 참여하거나 영향을 받았을지에 초점을 맞춰 간단하고 짧은 문장들로 구성해주세요. 호기심을 자극하는 주요 인물이나 흥미로운 사건을 간략히 언급할 수 있다면 더 좋습니다. 각 문장을 새로운 문단으로 구분해서 제시해주세요.`;
-
-        chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-        const payload = {
-            contents: chatHistory,
-            generationConfig: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: "ARRAY",
-                    items: { "type": "STRING" }
-                }
-            }
-        };
-        // In GitHub Pages, it's not secure to put API keys directly in the code.
-        // Here, it's left as an empty string for demonstration. In actual deployment,
-        // it should be handled by a backend or managed via environment variables.
-        const apiKey = "";
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-        try {
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          const result = await response.json();
-
-          if (result.candidates && result.candidates.length > 0 &&
-            result.candidates[0].content && result.candidates[0].content.parts &&
-            result.candidates[0].content.parts.length > 0) {
-            const text = result.candidates[0].content.parts[0].text;
-            try {
-                const parsedJson = JSON.parse(text); // Parse JSON string
-                setGeoInfo(prev => ({ ...prev, [country === '일본' ? 'japan' : 'ming']: parsedJson }));
-            } catch (parseError) {
-                console.error("JSON parsing error:", parseError);
-                setGeoInfo(prev => ({ ...prev, [country === '일본' ? 'japan' : 'ming']: ['정보를 가져왔으나 파싱에 실패했습니다.'] }));
-            }
-          } else {
-            console.error("Unexpected API response structure:", result);
-            setGeoInfo(prev => ({ ...prev, [country === '일본' ? 'japan' : 'ming']: ['정보를 가져오는 데 실패했습니다.'] }));
-          }
-        } catch (error) {
-          console.error("Error fetching historical context:", error);
-          setGeoInfo(prev => ({ ...prev, [country === '일본' ? 'japan' : 'ming']: ['정보를 가져오는 데 오류가 발생했습니다. (API 키 문제 또는 네트워크 오류일 수 있습니다)'] }));
-        } finally {
-          setLoading(false);
-        }
-      };
 
       // Quiz data (including questions related to Japan and Ming Dynasty)
       const quizQuestions = [
@@ -198,82 +171,43 @@
                 임진왜란이 일어나기 직전, 이웃 나라 일본과 명나라는 어떤 상황이었을까요?
               </p>
               <p className="text-lg text-gray-700 mb-6 text-center">
-                궁금한 나라의 버튼을 눌러 자세한 이야기를 들어봅시다!
+                아래에서 자세한 이야기를 들어봅시다!
               </p>
 
-              <div className="flex flex-col md:flex-row gap-6 mb-8 justify-center">
-                <button
-                  onClick={() => getHistoricalContext('일본')}
-                  className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center"
-                  disabled={loading}
-                >
-                  {loading && geoInfo.japan.length === 0 ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      정보 가져오는 중...
-                    </span>
-                  ) : (
-                    <>🇯🇵 일본 정세 파악하기</>
-                  )}
-                </button>
-                <button
-                  onClick={() => getHistoricalContext('명나라')}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center"
-                  disabled={loading}
-                >
-                  {loading && geoInfo.ming.length === 0 ? (
-                     <span className="flex items-center justify-center">
-                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                     </svg>
-                     정보 가져오는 중...
-                   </span>
-                  ) : (
-                    <>🇨🇳 명나라 정세 파악하기</>
-                  )}
-                </button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                  {/* 일본 상황 */}
+                  <div className="bg-blue-50 p-6 rounded-xl shadow-md border border-blue-200 flex flex-col">
+                    <h3 className="text-2xl font-bold text-blue-800 mb-4 text-center">🇯🇵 일본의 상황</h3>
+                    {geoInfo.japan.map((paragraph, index) => (
+                      <div key={`jp-bubble-${index}`} className="speech-bubble-paragraph bg-blue-100 border-blue-300">
+                        <p className="text-gray-700 leading-relaxed text-base text-justify">
+                          {paragraph}
+                        </p>
+                      </div>
+                    ))}
+                    <a href="http://contents.nahf.or.kr/id/NAHF.edeao.d_0004_0010_0010" target="_blank" rel="noopener noreferrer"
+                       className="mt-auto bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition duration-300 transform hover:scale-105 active:scale-95 text-center block w-full mt-4">
+                      더 많은 정보 보러 가기 (동북아역사넷)
+                    </a>
+                  </div>
+
+                  {/* 명나라 상황 */}
+                  <div className="bg-red-50 p-6 rounded-xl shadow-md border border-red-200 flex flex-col">
+                    <h3 className="text-2xl font-bold text-red-800 mb-4 text-center">🇨🇳 명나라의 상황</h3>
+                    {geoInfo.ming.map((paragraph, index) => (
+                      <div key={`mg-bubble-${index}`} className="speech-bubble-paragraph bg-red-100 border-red-300">
+                        <p className="text-gray-700 leading-relaxed text-base mb-2 text-justify">
+                          {paragraph}
+                        </p>
+                      </div>
+                    ))}
+                    <a href="https://archives.warmemo.or.kr:8443/exbi/prmn/exbiPrmnList.do?MID=UM00032&ctgryClfcCd=70" target="_blank" rel="noopener noreferrer"
+                       className="mt-auto bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition duration-300 transform hover:scale-105 active:scale-95 text-center block w-full mt-4">
+                      더 많은 정보 보러 가기 (전쟁기념관)
+                    </a>
+                  </div>
               </div>
 
-              {(geoInfo.japan.length > 0 || geoInfo.ming.length > 0) ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                  {geoInfo.japan.length > 0 && (
-                    <div className="bg-blue-50 p-6 rounded-xl shadow-md border border-blue-200 flex flex-col">
-                      <h3 className="text-2xl font-bold text-blue-800 mb-4 text-center">🇯🇵 일본의 상황</h3>
-                      {geoInfo.japan.map((paragraph, index) => (
-                        <p key={`jp-${index}`} className="text-gray-700 leading-relaxed text-base mb-2 text-justify">
-                          {paragraph}
-                        </p>
-                      ))}
-                      <a href="http://contents.nahf.or.kr/id/NAHF.edeao.d_0004_0010_0010" target="_blank" rel="noopener noreferrer"
-                         className="mt-auto bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition duration-300 transform hover:scale-105 active:scale-95 text-center block w-full mt-4">
-                        더 많은 정보 보러 가기 (동북아역사넷)
-                      </a>
-                    </div>
-                  )}
-                  {geoInfo.ming.length > 0 && (
-                    <div className="bg-red-50 p-6 rounded-xl shadow-md border border-red-200 flex flex-col">
-                      <h3 className="text-2xl font-bold text-red-800 mb-4 text-center">🇨🇳 명나라의 상황</h3>
-                      {geoInfo.ming.map((paragraph, index) => (
-                        <p key={`mg-${index}`} className="text-gray-700 leading-relaxed text-base mb-2 text-justify">
-                          {paragraph}
-                        </p>
-                      ))}
-                      <a href="https://archives.warmemo.or.kr:8443/exbi/prmn/exbiPrmnList.do?MID=UM00032&ctgryClfcCd=70" target="_blank" rel="noopener noreferrer"
-                         className="mt-auto bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition duration-300 transform hover:scale-105 active:scale-95 text-center block w-full mt-4">
-                        더 많은 정보 보러 가기 (전쟁기념관)
-                      </a>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center text-gray-500 text-lg mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200 animate-pulse-slow">
-                  위 버튼을 눌러 임진왜란 직전 각 나라의 정세를 확인해 보세요!
-                </div>
-              )}
 
               {/* 퀴즈 섹션 */}
               <div className="mt-12 p-8 bg-purple-50 rounded-xl shadow-lg border-4 border-purple-300">
