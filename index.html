@@ -187,28 +187,16 @@
         }
       };
 
-      // GitHub Pages에서는 './' 또는 절대 경로로 이미지를 제공해야 합니다.
-      // 실제 이미지 파일을 GitHub 레포지토리에 포함시키고 경로를 맞춰주세요.
-      const mainHeaderImage = "./Whisk_a7889361a1.jpg";
-      const japanSectionImage = "./Whisk_74c3fa41ef.jpg";
-      const mingSectionImage = "./Whisk_60357b7c52.jpg";
-
-
       return (
         <>
           <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center p-4">
             <div className="relative bg-white p-8 rounded-xl shadow-2xl max-w-4xl mx-auto border-4 border-purple-500">
               <h1 className="text-4xl font-bold text-gray-800 mb-6 text-center">⚔️ 임진왜란 이전 주변 정세 파악</h1>
-              <div className="text-center mb-6">
-                <img
-                  src={mainHeaderImage}
-                  alt="이순신 장군 이미지"
-                  className="mx-auto rounded-xl shadow-lg w-full max-w-md h-auto object-cover border-2 border-blue-300"
-                  onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/400x250/cccccc/333333?text=이미지+로드+실패"; }}
-                />
-              </div>
+              <p className="text-lg text-gray-700 mb-0 text-center">
+                임진왜란이 일어나기 직전, 이웃 나라 일본과 명나라는 어떤 상황이었을까요?
+              </p>
               <p className="text-lg text-gray-700 mb-6 text-center">
-                임진왜란이 일어나기 직전, 이웃 나라 일본과 명나라는 어떤 상황이었을까요? 궁금한 나라의 버튼을 눌러 자세한 이야기를 들어봅시다!
+                궁금한 나라의 버튼을 눌러 자세한 이야기를 들어봅시다!
               </p>
 
               <div className="flex flex-col md:flex-row gap-6 mb-8 justify-center">
@@ -251,51 +239,29 @@
               {(geoInfo.japan.length > 0 || geoInfo.ming.length > 0) ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                   {geoInfo.japan.length > 0 && (
-                    <div className="bg-blue-50 p-6 rounded-xl shadow-md border border-blue-200 flex flex-col items-center">
-                      <h3 className="text-2xl font-bold text-blue-800 mb-4">🇯🇵 일본의 상황</h3>
-                      <img
-                        src={japanSectionImage}
-                        alt="일본 관련 이미지"
-                        className="w-full h-48 rounded-lg mb-4 object-cover border border-gray-300"
-                        onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/300x200/a3d1ff/000000?text=일본의+성"; }}
-                      />
+                    <div className="bg-blue-50 p-6 rounded-xl shadow-md border border-blue-200 flex flex-col">
+                      <h3 className="text-2xl font-bold text-blue-800 mb-4 text-center">🇯🇵 일본의 상황</h3>
                       {geoInfo.japan.map((paragraph, index) => (
                         <p key={`jp-${index}`} className="text-gray-700 leading-relaxed text-base mb-2 text-justify">
                           {paragraph}
                         </p>
                       ))}
-                      <a href="https://contents.nahf.or.kr/item/item.do?mobile=true&levelId=cah_002_0020_0030_0020" target="_blank" rel="noopener noreferrer"
-                         className="mt-auto bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition duration-300 transform hover:scale-105 active:scale-95 text-center block w-full">
-                        더 많은 정보 보러 가기 (동북아역사재단)
-                      </a>
                     </div>
                   )}
                   {geoInfo.ming.length > 0 && (
-                    <div className="bg-red-50 p-6 rounded-xl shadow-md border border-red-200 flex flex-col items-center">
-                      <h3 className="text-2xl font-bold text-red-800 mb-4">🇨🇳 명나라의 상황</h3>
-                      <img
-                        src={mingSectionImage}
-                        alt="명나라 관련 이미지"
-                        className="w-full h-48 rounded-lg mb-4 object-cover border border-gray-300"
-                        onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/300x200/ffb3b3/000000?text=명나라의+궁궐"; }}
-                      />
+                    <div className="bg-red-50 p-6 rounded-xl shadow-md border border-red-200 flex flex-col">
+                      <h3 className="text-2xl font-bold text-red-800 mb-4 text-center">🇨🇳 명나라의 상황</h3>
                       {geoInfo.ming.map((paragraph, index) => (
                         <p key={`mg-${index}`} className="text-gray-700 leading-relaxed text-base mb-2 text-justify">
                           {paragraph}
                         </p>
                       ))}
-                      <a href="https://contents.history.go.kr/eh/view.do?contNo=EH0010100&levId=eh0010100.00010" target="_blank" rel="noopener noreferrer"
-                         className="mt-auto bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition duration-300 transform hover:scale-105 active:scale-95 text-center block w-full">
-                        더 많은 정보 보러 가기 (국사편찬위원회)
-                      </a>
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="text-center text-gray-500 text-lg mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200 animate-pulse-slow">
                   위 버튼을 눌러 임진왜란 직전 각 나라의 정세를 확인해 보세요!
-                  <br/>
-                  <img src="https://placehold.co/150x100/eeeeee/555555?text=역사+지도" alt="역사 지도 이미지" className="mx-auto mt-4 rounded-lg"/>
                 </div>
               )}
 
