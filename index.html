@@ -59,19 +59,21 @@
         // 더미 데이터를 설정하여 앱이 실행되도록 합니다.
         // 실제 Firebase 연동을 위해서는 Firebase SDK를 npm으로 설치하고
         // 빌드 과정을 거쳐야 합니다.
-        console.log("Firebase 초기화는 GitHub Pages 환경에서 직접 동작하지 않습니다.");
-        setDb({}); // 더미 객체
-        setAuth({}); // 더미 객체
-        setUserId('guest-user-github'); // 더미 사용자 ID
+        console.log("Firebase initialization does not work directly in GitHub Pages environment.");
+        setDb({}); // Dummy object
+        setAuth({}); // Dummy object
+        setUserId('guest-user-github'); // Dummy user ID
         setIsAuthReady(true);
       }, []);
 
-      // Gemini API를 호출하여 역사적 맥락을 가져오는 함수
+      // Function to call Gemini API for historical context
       const getHistoricalContext = async (country) => {
         setLoading(true);
         let chatHistory = [];
-        // 초등학생 수준에 맞춰 정치, 사회, 경제 상황을 자세히 설명하고,
-        // 전쟁 참여 및 영향에 초점을 맞추며, 주요 인물/사건을 간략히 언급하도록 프롬프트 강화
+        // Enhanced prompt to explain political, social, and economic situations just before the Imjin War at an elementary school level,
+        // focusing on why they were involved or affected by the war with Joseon,
+        // and using simple, short sentences. Brief mention of key figures or interesting events is welcome.
+        // Each sentence should be separated into a new paragraph.
         const prompt = `초등학생 수준으로 임진왜란 직전의 ${country}의 정치, 사회, 경제 상황을 아주 쉽고 재미있게 설명해주세요. 왜 그들이 조선과의 전쟁에 참여하거나 영향을 받았을지에 초점을 맞춰 간단하고 짧은 문장들로 구성해주세요. 호기심을 자극하는 주요 인물이나 흥미로운 사건을 간략히 언급할 수 있다면 더 좋습니다. 각 문장을 새로운 문단으로 구분해서 제시해주세요.`;
 
         chatHistory.push({ role: "user", parts: [{ text: prompt }] });
@@ -85,9 +87,9 @@
                 }
             }
         };
-        // GitHub Pages에서는 API 키를 직접 코드에 넣는 것은 보안상 좋지 않습니다.
-        // 여기서는 예시를 위해 빈 문자열로 두었으며, 실제 배포 시에는 백엔드에서 처리하거나
-        // 환경 변수로 관리해야 합니다.
+        // In GitHub Pages, it's not secure to put API keys directly in the code.
+        // Here, it's left as an empty string for demonstration. In actual deployment,
+        // it should be handled by a backend or managed via environment variables.
         const apiKey = "";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
@@ -104,25 +106,25 @@
             result.candidates[0].content.parts.length > 0) {
             const text = result.candidates[0].content.parts[0].text;
             try {
-                const parsedJson = JSON.parse(text); // JSON 문자열을 파싱
+                const parsedJson = JSON.parse(text); // Parse JSON string
                 setGeoInfo(prev => ({ ...prev, [country === '일본' ? 'japan' : 'ming']: parsedJson }));
             } catch (parseError) {
-                console.error("JSON 파싱 오류:", parseError);
+                console.error("JSON parsing error:", parseError);
                 setGeoInfo(prev => ({ ...prev, [country === '일본' ? 'japan' : 'ming']: ['정보를 가져왔으나 파싱에 실패했습니다.'] }));
             }
           } else {
-            console.error("예상치 못한 API 응답 구조:", result);
+            console.error("Unexpected API response structure:", result);
             setGeoInfo(prev => ({ ...prev, [country === '일본' ? 'japan' : 'ming']: ['정보를 가져오는 데 실패했습니다.'] }));
           }
         } catch (error) {
-          console.error("역사적 맥락을 가져오는 중 오류 발생:", error);
-          setGeoInfo(prev => ({ ...prev, [country === '일본' ? 'japan' : 'ming']: ['정보를 가져오는 데 오류가 발생했습니다.'] }));
+          console.error("Error fetching historical context:", error);
+          setGeoInfo(prev => ({ ...prev, [country === '일본' ? 'japan' : 'ming']: ['정보를 가져오는 데 오류가 발생했습니다. (API 키 문제 또는 네트워크 오류일 수 있습니다)'] }));
         } finally {
           setLoading(false);
         }
       };
 
-      // 퀴즈 데이터 (일본, 명나라 관련 질문 포함)
+      // Quiz data (including questions related to Japan and Ming Dynasty)
       const quizQuestions = [
         {
           question: "임진왜란을 일으킨 일본의 장수는 누구일까요?",
@@ -158,7 +160,7 @@
 
       const handleAnswerSelect = (option) => {
         setSelectedAnswer(option);
-        setQuizFeedback(''); // 답변 선택 시 피드백 초기화
+        setQuizFeedback(''); // Clear feedback on answer selection
         setShowQuizResult(false);
       };
 
@@ -182,7 +184,7 @@
         if (currentQuizQuestion < quizQuestions.length - 1) {
           setCurrentQuizQuestion(prev => prev + 1);
         } else {
-          setCurrentQuizQuestion(0); // 모든 문제 풀면 처음으로 돌아가기
+          setCurrentQuizQuestion(0); // Loop back to the first question if all questions are answered
           setQuizFeedback('모든 퀴즈를 푸셨습니다! 처음부터 다시 시작합니다. ✨');
         }
       };
@@ -246,6 +248,10 @@
                           {paragraph}
                         </p>
                       ))}
+                      <a href="http://contents.nahf.or.kr/id/NAHF.edeao.d_0004_0010_0010" target="_blank" rel="noopener noreferrer"
+                         className="mt-auto bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition duration-300 transform hover:scale-105 active:scale-95 text-center block w-full mt-4">
+                        더 많은 정보 보러 가기 (동북아역사넷)
+                      </a>
                     </div>
                   )}
                   {geoInfo.ming.length > 0 && (
@@ -256,6 +262,10 @@
                           {paragraph}
                         </p>
                       ))}
+                      <a href="https://archives.warmemo.or.kr:8443/exbi/prmn/exbiPrmnList.do?MID=UM00032&ctgryClfcCd=70" target="_blank" rel="noopener noreferrer"
+                         className="mt-auto bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition duration-300 transform hover:scale-105 active:scale-95 text-center block w-full mt-4">
+                        더 많은 정보 보러 가기 (전쟁기념관)
+                      </a>
                     </div>
                   )}
                 </div>
