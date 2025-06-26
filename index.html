@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>임진왜란 역사 탐험</title>
+  <!-- Tailwind CSS와 같은 디자인을 위한 스크립트 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React와 JSX를 브라우저에서 직접 실행하기 위한 스크립트 -->
+  <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- 예쁜 한글 폰트 -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+    /* 장군님 캐릭터가 살짝 움직이는 효과 */
+    .animate-float {
+      animation: float 3s infinite ease-in-out;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    /* 글자가 타이핑되는 효과를 위한 깜빡이는 커서 */
+    .typing-text::after {
+        content: '|';
+        animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+        from, to { color: transparent }
+        50% { color: black; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // 글자가 한 글자씩 나타나는 타이핑 효과 컴포넌트
+    const TypedText = ({ text, onComplete }) => {
+      const [displayedText, setDisplayedText] = useState('');
+
+      useEffect(() => {
+        setDisplayedText(''); // 텍스트가 바뀔 때마다 초기화
+        let index = 0;
+        const intervalId = setInterval(() => {
+          if (index < text.length) {
+            setDisplayedText(prev => prev + text[index]);
+            index++;
+          } else {
+            clearInterval(intervalId);
+            if (onComplete) onComplete();
+          }
+        }, 60); // 타이핑 속도 (ms)
+
+        return () => clearInterval(intervalId);
+      }, [text, onComplete]);
+
+      return <span className="typing-text">{displayedText}</span>;
+    };
+
+    function App() {
+      const [scene, setScene] = useState(0); // 0: 시작, 1: 불호령, 2: 면담, 3: 정세 파악
+      const [loading, setLoading] = useState(false);
+      const [geoInfo, setGeoInfo] = useState({ japan: '', ming: '' });
+      const [isTypingComplete, setIsTypingComplete] = useState(true);
+
+      // 장면이 바뀔 때마다 타이핑 상태 초기화
+      useEffect(() => {
+        setIsTypingComplete(false);
+      }, [scene]);
+
+      // Gemini API 호출 함수 (이 코드에서는 시뮬레이션으로 대체)
+      const getHistoricalContext = (country) => {
+        setLoading(true);
+        // 실제 API 호출 대신, 미리 준비된 텍스트를 보여줍니다.
+        // GitHub Pages에서는 API 키 보안 문제로 직접 호출이 어렵기 때문입니다.
+        setTimeout(() => {
+            let infoText = '';
+            if (country === '일본') {
+                infoText = '당시 일본은 오랜 전쟁으로 혼란스러웠지만, \'도요토미 히데요시\'라는 인물이 일본 전체를 통일했어요. 그는 강력한 군대를 다른 곳으로 보내고 싶어 했고, 그 목표가 바로 조선과 명나라였답니다.';
+            } else {
+                infoText = '명나라는 아주 크고 힘센 나라였지만, 안에서는 힘겨루기와 사치로 조금씩 약해지고 있었어요. 특히 북쪽의 다른 민족들과의 다툼 때문에 국방에 많은 신경을 쓰고 있었답니다.';
+            }
+            setGeoInfo(prev => ({ ...prev, [country === '일본' ? 'japan' : 'ming']: infoText }));
+            setLoading(false);
+        }, 1500); // 1.5초 후 정보를 보여줘서 로딩하는 것처럼 보이게 함
+      };
+      
+      // 화면을 그리는 함수
+      const renderScene = () => {
+        // 이순신 장군님 캐릭터 이미지 (웹에 업로드된 주소)
+        const admiralImage = "https://i.ibb.co/h7gW6Yg/yi-sun-sin-and-ship.png";
+        // 거북선 이미지
+        const turtleShipImage = "https://i.ibb.co/L92bN0T/yi-sun-sin-detailed.jpg";
+
+        switch (scene) {
+          // --- 0. 시작 화면 ---
+          case 0:
+            return (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-8 max-w-2xl mx-auto text-center border-4 border-slate-400">
+                <img src={turtleShipImage} alt="거북선과 이순신 장군" className="w-full max-w-md mx-auto rounded-lg mb-6"/>
+                <h1 className="text-4xl font-bold text-slate-800 mb-4">📖 임진왜란 역사 속으로!</h1>
+                <p className="text-lg text-gray-700 mb-8">
+                  책을 펼치니, 우리는 어느새 역사의 한가운데에 서 있습니다. <br/>어떤 이야기가 우리를 기다리고 있을까요?
+                </p>
+                <button
+                  onClick={() => setScene(1)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105 active:scale-95 text-lg"
+                >
+                  훈련장으로 이동하기
+                </button>
+              </div>
+            );
+          
+          // --- 1. 불호령 장면 ---
+          case 1:
+            return (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-8 max-w-2xl mx-auto text-center border-4 border-red-400">
+                <img src={admiralImage} alt="화난 이순신 장군" className="w-48 h-48 mx-auto mb-4 animate-float" />
+                <div className="bg-gray-100 p-6 rounded-lg min-h-[120px] flex items-center justify-center">
+                  <p className="text-xl text-gray-800 font-semibold leading-relaxed">
+                    <TypedText
+                      text="웬 놈들이냐! 대열도 맞추지 못하고! 정신 바짝 차리지 못할까!"
+                      onComplete={() => setIsTypingComplete(true)}
+                    />
+                  </p>
+                </div>
+                {isTypingComplete && (
+                  <button
+                    onClick={() => setScene(2)}
+                    className="mt-8 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105 active:scale-95 text-lg animate-bounce"
+                  >
+                    (앗, 혼났다...) 면담하러 가기
+                  </button>
+                )}
+              </div>
+            );
+
+          // --- 2. 개별 면담 장면 ---
+          case 2:
+            return (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-8 max-w-2xl mx-auto text-center border-4 border-green-400">
+                <img src={admiralImage} alt="진지한 이순신 장군" className="w-48 h-48 mx-auto mb-4 animate-float" />
+                <div className="bg-gray-100 p-6 rounded-lg min-h-[150px] flex items-center justify-center">
+                    <p className="text-xl text-gray-800 font-semibold leading-relaxed">
+                        <TypedText
+                            text="미안하구나. 너무 놀랐을 것이다. 하지만 지금은 정신을 바짝 차려야 할 때다. 우리를 둘러싼 일본과 명나라의 상황을 알아보고 내게 보고해주겠느냐?"
+                            onComplete={() => setIsTypingComplete(true)}
+                        />
+                    </p>
+                </div>
+                {isTypingComplete && (
+                  <button
+                    onClick={() => setScene(3)}
+                    className="mt-8 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105 active:scale-95 text-lg"
+                  >
+                    네, 장군님!
+                  </button>
+                )}
+              </div>
+            );
+
+          // --- 3. 정세 파악 장면 ---
+          case 3:
+            return (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-8 max-w-4xl mx-auto border-4 border-purple-400">
+                <h2 className="text-3xl font-bold text-purple-800 mb-6 text-center">주변 정세 파악하기</h2>
+                <p className="text-lg text-gray-700 mb-8 text-center">
+                  장군님의 명이다! 아래 버튼을 눌러 각 나라의 상황을 알아보자.
+                </p>
+                <div className="flex flex-col md:flex-row gap-6 mb-8 justify-center">
+                  <button onClick={() => getHistoricalContext('일본')} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105" disabled={loading}>
+                    {loading && !geoInfo.japan ? '조사 중...' : '🇯🇵 일본 상황 알아보기'}
+                  </button>
+                  <button onClick={() => getHistoricalContext('명나라')} className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105" disabled={loading}>
+                    {loading && !geoInfo.ming ? '조사 중...' : '🇨🇳 명나라 상황 알아보기'}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-red-50 p-6 rounded-xl shadow-inner border border-red-200">
+                    <h3 className="text-2xl font-bold text-red-800 mb-4">🇯🇵 일본의 상황</h3>
+                    <p className="text-gray-700 leading-relaxed text-base min-h-[150px]">{geoInfo.japan || '버튼을 눌러 조사해주세요.'}</p>
+                  </div>
+                  <div className="bg-blue-50 p-6 rounded-xl shadow-inner border border-blue-200">
+                    <h3 className="text-2xl font-bold text-blue-800 mb-4">🇨🇳 명나라의 상황</h3>
+                    <p className="text-gray-700 leading-relaxed text-base min-h-[150px]">{geoInfo.ming || '버튼을 눌러 조사해주세요.'}</p>
+                  </div>
+                </div>
+
+                <div className="text-center mt-8">
+                  <button onClick={() => { setScene(0); setGeoInfo({japan:'', ming:''}); }} className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-5 rounded-full shadow-md transition-transform transform hover:scale-105">
+                    처음으로
+                  </button>
+                </div>
+              </div>
+            );
+          default:
+            return null;
+        }
+      };
+
+      return (
+        <div className="min-h-screen bg-cover bg-center bg-fixed" style={{backgroundImage: "url('https://cdn.pixabay.com/photo/2017/02/15/11/29/painting-2068211_1280.jpg')"}}>
+            <div className="min-h-screen flex items-center justify-center p-4">
+                {renderScene()}
+            </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
