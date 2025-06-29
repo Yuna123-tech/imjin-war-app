@@ -1,266 +1,974 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>임진왜란 주변 정세 파악 앱</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Noto Sans KR 폰트 임포트 -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Noto Sans KR', sans-serif;
-    }
-    .animate-pulse-slow {
-      animation: pulse 4s infinite cubic-bezier(0.4, 0, 0.6, 1);
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: .5; }
-    }
-    /* 말풍선 스타일 */
-    .speech-bubble-paragraph {
-      border-radius: 0.75rem; /* 더 둥근 모서리 */
-      padding: 1rem;
-      margin-bottom: 0.75rem; /* 말풍선 사이 간격 */
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 은은한 그림자 */
-      line-height: 1.6; /* 줄 간격 */
-    }
-    .speech-bubble-paragraph:last-child {
-      margin-bottom: 0; /* 마지막 말풍선은 하단 마진 없음 */
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이순신 학익진 미니게임</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden; /* Prevent scrollbars */
+            color: #e0e0e0;
+            flex-direction: column; /* Allow vertical stacking for mobile controls */
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #161b22; /* Slightly lighter dark background */
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 255, 255, 0.2); /* Cyan glow */
+            border: 1px solid #00ffff; /* Cyan border */
+            max-width: 90vw;
+            width: 800px; /* Base width */
+            box-sizing: border-box;
+            /* Added margin-bottom to prevent content overlap with fixed mobile controls */
+            margin-bottom: 80px; /* Adjust as needed for fixed mobile controls */
+        }
+        @media (min-width: 769px) {
+            .game-container {
+                margin-bottom: 20px; /* Less margin on desktop */
+            }
+        }
+        canvas {
+            background-color: #011627; /* Dark blue for water */
+            border-radius: 10px;
+            border: 2px solid #00bcd4; /* Light blue border for canvas */
+            display: block;
+            touch-action: none; /* Disable default touch actions on canvas itself, handled by buttons */
+            transition: border-color 0.1s ease; /* Smooth transition for border color */
+        }
+        canvas.hakikjin-active-border {
+            border-color: #00ff00; /* Green border when Hakikjin is active */
+        }
+        .controls {
+            margin-top: 20px;
+            font-size: 0.9em;
+            text-align: center;
+            color: #c9d1d9;
+        }
+        .status-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-weight: bold;
+            color: #00ffff; /* Cyan for status text */
+        }
+        .message-box {
+            position: fixed; /* Changed to fixed for better overlay behavior */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(22, 27, 34, 0.95); /* More opaque */
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.7); /* Stronger glow */
+            z-index: 1000;
+            display: none; /* Hidden by default */
+            color: #e0e0e0;
+            max-width: 90%; /* Max width for responsiveness */
+        }
+        .message-box h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+            color: #00ffff;
+        }
+        .message-box p {
+            font-size: 1.2em;
+            margin-bottom: 25px;
+            white-space: pre-wrap; /* Preserve whitespace and line breaks for instructions */
+        }
+        .message-box button {
+            background-color: #00ffff;
+            color: #161b22;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-weight: bold;
+            margin: 0 10px; /* Add margin for multiple buttons */
+        }
+        .message-box button:hover {
+            background-color: #00e0e0;
+            transform: translateY(-2px);
+        }
+
+        /* Keyboard button styling for visual representation */
+        .key-button {
+            display: inline-block;
+            background-color: #30363d;
+            border: 1px solid #8b949e;
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin: 0 2px;
+            font-family: 'monospace';
+            font-size: 0.9em;
+            color: #c9d1d9;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        /* Mobile controls specific styles */
+        .mobile-controls {
+            position: fixed; /* Fixed position relative to viewport */
+            bottom: 20px; /* From bottom */
+            left: 20px;  /* From left */
+            display: flex;
+            justify-content: flex-start; /* Align to start (left) */
+            align-items: flex-end; /* Align to bottom if items have different heights */
+            gap: 20px; /* Space between D-pad and action button */
+            width: auto; /* Let content define width */
+            padding: 0;
+            box-sizing: border-box;
+            z-index: 999; /* Ensure it's above other elements */
+            
+            /* Default: hidden on larger screens, shown on small screens */
+            display: none; /* Hidden by default, shown by media query */
+        }
+        @media (max-width: 768px) {
+            .mobile-controls {
+                display: flex; /* Show on mobile */
+            }
+            .controls {
+                display: none; /* Hide keyboard controls on mobile */
+            }
+        }
+        @media (min-width: 769px) {
+            .mobile-controls {
+                display: none; /* Hide mobile controls on desktop */
+            }
+            .controls {
+                display: block; /* Show keyboard controls on desktop */
+            }
+        }
+
+        .d-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 50px);
+            grid-template-rows: repeat(3, 50px);
+            gap: 5px;
+            position: relative;
+        }
+        .d-pad button {
+            background-color: #30363d;
+            color: #c9d1d9;
+            border: 1px solid #8b949e;
+            border-radius: 8px;
+            font-size: 1.5em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.1s ease, transform 0.1s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            user-select: none; /* Prevent text selection on touch */
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+        .d-pad button:active {
+            background-color: #4CAF50; /* Green on active */
+            transform: translateY(1px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .d-pad .up { grid-area: 1 / 2 / 2 / 3; }
+        .d-pad .left { grid-area: 2 / 1 / 3 / 2; }
+        .d-pad .right { grid-area: 2 / 3 / 3 / 4; }
+        .d-pad .down { grid-area: 3 / 2 / 4 / 3; }
+        .d-pad .center-filler {
+            grid-area: 2 / 2 / 3 / 3;
+            background-color: #24292e; /* Darker center */
+            border-radius: 8px;
+        }
+
+        .action-button {
+            background-color: #f44336; /* Red for action */
+            color: #fff;
+            padding: 20px 30px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: background-color 0.1s ease, transform 0.1s ease;
+            user-select: none; /* Prevent text selection on touch */
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+        .action-button:active {
+            background-color: #d32f2f;
+            transform: translateY(2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        .action-button.inactive {
+            background-color: #616161; /* Grey when inactive */
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+    </style>
 </head>
 <body>
-  <div id="root"></div>
+    <div class="game-container">
+        <div class="status-bar">
+            <div id="hakikjin-status">학익진 기술: X</div>
+            <div id="score">격파한 적선: 0</div>
+            <div id="remaining-enemies">남은 적선: 0</div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div class="controls">
+            <p><strong>조작법:</strong></p>
+            <p><span class="key-button">↑</span> <span class="key-button">↓</span> <span class="key-button">←</span> <span class="key-button">→</span> 키로 이순신 장군 주력선을 움직이세요.</p>
+            <p id="hakikjin-control-text"></p>
+        </div>
+    </div>
 
-  <!-- React 및 ReactDOM CDN -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <!-- Babel CDN (JSX 변환용) -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <div class="mobile-controls">
+        <div class="d-pad">
+            <button class="up" id="btnUp">↑</button>
+            <button class="left" id="btnLeft">←</button>
+            <div class="center-filler"></div>
+            <button class="right" id="btnRight">→</button>
+            <button class="down" id="btnDown">↓</button>
+        </div>
+        <button class="action-button" id="btnHakikjin">학익진!</button>
+    </div>
 
-  <script type="text/babel">
-    // Firebase related global variables are not directly usable in a GitHub Pages environment.
-    // However, they are kept for code structure consistency.
-    // For actual Firebase integration, separate Firebase project setup and SDK initialization are required.
-    // As they are not functionally used here, these declarations are safely maintained.
-    const __app_id = 'imjin-war-geopolitics-app'; // Using a fixed value for GitHub
-    const __firebase_config = '{}'; // Firebase config not used in this environment
-    const __initial_auth_token = null; // Initial auth token not used in this environment
+    <div id="messageBox" class="message-box">
+        <h2 id="messageTitle"></h2>
+        <p id="messageText"></p>
+        <div id="messageButtons">
+            <button id="continueButton" style="display:none;">계속하기</button>
+            <button id="restartButton" style="display:none;">다시 시작</button>
+            <button id="infoOkButton" style="display:none;">확인</button>
+        </div>
+    </div>
 
+    <script type="module">
+        // Firebase related global variables (provided by Canvas environment) - not currently used
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 
-    function App() {
-      const [loading, setLoading] = React.useState(false);
-      const [geoInfo, setGeoInfo] = React.useState({ japan: [], ming: [] }); // Modified to receive arrays
-      const [currentQuizQuestion, setCurrentQuizQuestion] = React.useState(0);
-      const [selectedAnswer, setSelectedAnswer] = React.useState(null);
-      const [quizFeedback, setQuizFeedback] = React.useState('');
-      const [showQuizResult, setShowQuizResult] = React.useState(false);
+        // ===========================================
+        // Global Game Constants
+        // These are outside the DOMContentLoaded because they are truly constants and don't rely on DOM.
+        // ===========================================
+        const GAME_WIDTH = 700;
+        const GAME_HEIGHT = 500;
+        const PLAYER_SPEED = 3;
+        const ALLIED_FOLLOW_SPEED = 0.05;
+        const ALLIED_SPREAD_DISTANCE = 80;
+        const ALLIED_BASE_OFFSET_X = 30;
+        const ALLIED_BASE_OFFSET_Y = 50;
+        const ENEMY_SPEED = 1.5;
+        const ENEMY_INITIAL_COUNT = 20; // Initial enemy count
+        const ENEMY_REINFORCEMENT_COUNT = 40; // Reinforcement enemy count
+        const HAKIKJIN_UNLOCK_SCORE = 5;
 
-      // Firebase setup (not directly connected in GitHub Pages)
-      const [db, setDb] = React.useState(null);
-      const [auth, setAuth] = React.useState(null);
-      const [userId, setUserId] = React.useState(null);
-      const [isAuthReady, setIsAuthReady] = React.useState(false);
+        // Korean Flag Image - loaded globally as it's a shared resource
+        const koreanFlagImage = new Image();
+        koreanFlagImage.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Flag_of_South_Korea.svg/100px-Flag_of_South_Korea.svg.png';
+        let isFlagImageLoaded = false; // Flag to check if image is loaded
 
-      React.useEffect(() => {
-        // In the GitHub Pages environment, Firebase initialization does not directly function.
-        // Therefore, dummy data is set to allow the app to run.
-        // For actual Firebase integration, Firebase SDK would need to be installed via npm and built.
-        console.log("Firebase initialization does not work directly in GitHub Pages environment.");
-        setDb({}); // Dummy object
-        setAuth({}); // Dummy object
-        setUserId('guest-user-github'); // Dummy user ID
-        setIsAuthReady(true);
-
-        // Populate geoInfo with static data immediately on component mount
-        setGeoInfo({
-          japan: [
-            "일본은 100년 넘게 여러 영주들이 서로 싸우던 '전국 시대'라는 혼란스러운 시간을 보내고 있었어요. 마치 여러 왕들이 자기 땅을 더 넓히려고 계속 싸우는 시기였죠.",
-            "이 긴 싸움을 '도요토미 히데요시'라는 아주 힘세고 똑똑한 장군이 마침내 끝내고 일본을 하나의 나라로 통일했어요. 히데요시는 이제 일본에서 가장 높은 자리에 오르게 되었답니다.",
-            "나라를 통일하는 과정에서 많은 병사들이 전쟁만 했기 때문에, 히데요시는 이 병사들의 불만을 잠재우고 새로운 목표를 주고 싶었어요. 또한, 그의 넘치는 힘과 야망을 다른 나라에 보여주고 싶어 했죠.",
-            "그래서 히데요시는 아주 큰 꿈을 꾸게 됩니다. 바로 일본을 넘어 중국의 '명나라'까지 정복하는 것이었어요. 당시 명나라는 아시아에서 가장 강력한 나라였답니다.",
-            "하지만 일본에서 명나라로 가려면 꼭 조선을 지나가야만 했어요. 히데요시는 조선에 길을 비켜달라고 요구했지만, 조선은 이를 단호히 거절했어요. 조선은 일본이 중국까지 가는 길을 열어주면 자신들도 위험해질 수 있다고 생각했거든요.",
-            "조선의 거절에 화가 난 히데요시는 결국 1592년에 대규모 군대를 이끌고 조선을 침략하게 됩니다. 이것이 바로 '임진왜란'의 가장 중요한 시작 이유 중 하나였어요."
-          ],
-          ming: [
-            "명나라는 당시 동아시아에서 가장 크고 오래된 제국이었어요. 중국을 다스리는 아주 강력한 나라였죠. 오랫동안 주변 나라들에게 큰 영향을 미치고 있었답니다.",
-            "하지만 명나라는 겉으로는 강해 보였지만, 속으로는 여러 가지 어려운 문제들로 몸살을 앓고 있었어요. 황제들은 나라의 살림을 잘 돌보지 않아 정치가 혼란스러웠고, 높은 관리들 사이에 다툼도 심했어요.",
-            "가장 큰 문제는 '재정'이었어요. 나라에 돈이 부족해서 군사들을 제대로 돌보지 못하고, 백성들을 위한 정책도 펼치기 어려웠죠. 게다가 농사를 지을 땅도 부족해지고, 자연재해까지 겹쳐 백성들의 삶이 매우 힘들었어요.",
-            "백성들은 먹고살기 힘들어지자 여기저기서 반란을 일으키기 시작했고, 북쪽 국경에서는 '여진족'이라는 새로운 세력이 강해져 명나라를 계속 괴롭혔어요. 바다에서는 '왜구'들이 나타나 마을을 약탈하고 백성들을 힘들게 했죠.",
-            "이런 국내외의 많은 문제들을 해결하느라 명나라는 이미 많은 힘과 돈을 쓰고 군사력이 약해지고 있었답니다.",
-            "일본이 조선을 침략하자, 명나라는 처음에는 조선을 돕는 것에 대해 고민이 많았어요. 하지만 일본이 조선을 정복하고 더 강해지면, 다음 목표가 바로 명나라 자신이 될 수도 있다고 생각했죠.",
-            "그래서 명나라는 자신들의 안전을 지키고, 오랫동안 지켜온 동아시아의 질서를 유지하기 위해 결국 조선을 도와주기로 결정하고 대규모 군대를 조선에 보냈답니다. 명나라가 임진왜란에 참전한 것은 자신들의 나라를 지키기 위한 중요한 선택이었어요."
-          ]
-        });
-      }, []);
-
-      // Quiz data (including questions related to Japan and Ming Dynasty)
-      const quizQuestions = [
-        {
-          question: "임진왜란을 일으킨 일본의 장수는 누구일까요?",
-          options: ["도쿠가와 이에야스", "도요토미 히데요시", "오다 노부나가", "시마즈 요시히로"],
-          answer: "도요토미 히데요시",
-        },
-        {
-          question: "임진왜란 당시 일본이 조선을 침략하려 했던 가장 큰 이유는 무엇일까요?",
-          options: ["조선의 문화를 배우고 싶어서", "명나라를 정복하고 싶어서", "조선과 무역을 하고 싶어서", "농사를 짓기 좋은 땅을 찾아서"],
-          answer: "명나라를 정복하고 싶어서",
-        },
-        {
-          question: "임진왜란 당시 조선을 도왔던 나라는 어디일까요?",
-          options: ["청나라", "명나라", "몽골", "베트남"],
-          answer: "명나라",
-        },
-        {
-          question: "임진왜란 직전 명나라가 가지고 있던 가장 큰 국내 문제는 무엇일까요?",
-          options: ["평화로운 시대였다", "돈이 많았다", "농민 반란과 재정 문제가 있었다", "이웃 나라와 사이가 좋았다"],
-          answer: "농민 반란과 재정 문제가 있었다",
-        },
-        {
-          question: "명나라는 왜 임진왜란에 참여하여 조선을 도왔을까요?",
-          options: ["조선을 아주 좋아해서", "일본이 강해지는 것을 막고 싶어서", "조선의 바다를 차지하고 싶어서", "새로운 친구를 사귀고 싶어서"],
-          answer: "일본이 강해지는 것을 막고 싶어서",
-        },
-        {
-          question: "임진왜란 이후 명나라가 겪게 된 가장 큰 어려움은 무엇일까요?",
-          options: ["더 부유해졌다", "새로운 영토를 얻었다", "전쟁으로 많은 돈을 써서 나라가 약해졌다", "문화가 발전했다"],
-          answer: "전쟁으로 많은 돈을 써서 나라가 약해졌다",
-        },
-      ];
-
-      const handleAnswerSelect = (option) => {
-        setSelectedAnswer(option);
-        setQuizFeedback(''); // Clear feedback on answer selection
-        setShowQuizResult(false);
-      };
-
-      const checkAnswer = () => {
-        if (selectedAnswer === null) {
-          setQuizFeedback('정답을 선택해주세요!');
-          return;
-        }
-        if (selectedAnswer === quizQuestions[currentQuizQuestion].answer) {
-          setQuizFeedback('정답입니다! 🎉');
-        } else {
-          setQuizFeedback(`오답입니다. 정답은 '${quizQuestions[currentQuizQuestion].answer}' 입니다. 🥲`);
-        }
-        setShowQuizResult(true);
-      };
-
-      const nextQuestion = () => {
-        setSelectedAnswer(null);
-        setQuizFeedback('');
-        setShowQuizResult(false);
-        if (currentQuizQuestion < quizQuestions.length - 1) {
-          setCurrentQuizQuestion(prev => prev + 1);
-        } else {
-          setCurrentQuizQuestion(0); // Loop back to the first question if all questions are answered
-          setQuizFeedback('모든 퀴즈를 푸셨습니다! 처음부터 다시 시작합니다. ✨');
-        }
-      };
-
-      return (
-        <>
-          <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center p-4">
-            <div className="relative bg-white p-8 rounded-xl shadow-2xl max-w-4xl mx-auto border-4 border-purple-500">
-              <h1 className="text-4xl font-bold text-gray-800 mb-6 text-center">⚔️ 임진왜란 이전 주변 정세 파악</h1>
-              <p className="text-lg text-gray-700 mb-0 text-center">
-                임진왜란이 일어나기 직전, 이웃 나라 일본과 명나라는 어떤 상황이었을까요?
-              </p>
-              <p className="text-lg text-gray-700 mb-6 text-center">
-                아래에서 자세한 이야기를 들어봅시다!
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                  {/* 일본 상황 */}
-                  <div className="bg-blue-50 p-6 rounded-xl shadow-md border border-blue-200 flex flex-col">
-                    <h3 className="text-2xl font-bold text-blue-800 mb-4 text-center">🇯🇵 일본의 상황</h3>
-                    {geoInfo.japan.map((paragraph, index) => (
-                      <div key={`jp-bubble-${index}`} className="speech-bubble-paragraph bg-blue-100 border-blue-300">
-                        <p className="text-gray-700 leading-relaxed text-base text-justify">
-                          {paragraph}
-                        </p>
-                      </div>
-                    ))}
-                    <a href="http://contents.nahf.or.kr/id/NAHF.edeao.d_0004_0010_0010" target="_blank" rel="noopener noreferrer"
-                       className="mt-auto bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition duration-300 transform hover:scale-105 active:scale-95 text-center block w-full mt-4">
-                      더 많은 정보 보러 가기 (동북아역사넷)
-                    </a>
-                  </div>
-
-                  {/* 명나라 상황 */}
-                  <div className="bg-red-50 p-6 rounded-xl shadow-md border border-red-200 flex flex-col">
-                    <h3 className="text-2xl font-bold text-red-800 mb-4 text-center">🇨🇳 명나라의 상황</h3>
-                    {geoInfo.ming.map((paragraph, index) => (
-                      <div key={`mg-bubble-${index}`} className="speech-bubble-paragraph bg-red-100 border-red-300">
-                        <p className="text-gray-700 leading-relaxed text-base mb-2 text-justify">
-                          {paragraph}
-                        </p>
-                      </div>
-                    ))}
-                    <a href="https://archives.warmemo.or.kr:8443/exbi/prmn/exbiPrmnList.do?MID=UM00032&ctgryClfcCd=70" target="_blank" rel="noopener noreferrer"
-                       className="mt-auto bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition duration-300 transform hover:scale-105 active:scale-95 text-center block w-full mt-4">
-                      더 많은 정보 보러 가기 (전쟁기념관)
-                    </a>
-                  </div>
-              </div>
+        koreanFlagImage.onload = () => {
+            isFlagImageLoaded = true;
+        };
+        koreanFlagImage.onerror = () => {
+            console.error("Failed to load Korean flag image.");
+            isFlagImageLoaded = false; // Fallback to drawing if image fails
+        };
 
 
-              {/* 퀴즈 섹션 */}
-              <div className="mt-12 p-8 bg-purple-50 rounded-xl shadow-lg border-4 border-purple-300">
-                <h2 className="text-3xl font-bold text-purple-700 mb-6 text-center">🧠 역사 퀴즈 풀기!</h2>
-                <div className="text-center mb-6">
-                  <p className="text-xl font-semibold text-gray-800 mb-4">
-                    {quizQuestions[currentQuizQuestion].question}
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {quizQuestions[currentQuizQuestion].options.map((option, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleAnswerSelect(option)}
-                        className={`p-3 rounded-lg border-2 ${selectedAnswer === option ? 'bg-blue-200 border-blue-500' : 'bg-gray-100 border-gray-300'} hover:bg-blue-100 transition duration-200`}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-6">
-                    <button
-                      onClick={checkAnswer}
-                      className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-5 rounded-xl shadow-md transition duration-300 transform hover:scale-105 active:scale-95 mr-4"
-                    >
-                      정답 확인
+        // ===========================================
+        // DOMContentLoaded - Main Script Execution Block
+        // All game state variables, function definitions, class definitions,
+        // DOM element references, and event listeners are placed here.
+        // This ensures everything is defined and available after the DOM is ready.
+        // ===========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Game State Variables - Local to this DOMContentLoaded scope
+            let player;
+            let alliedShips = [];
+            let enemyShips = [];
+            let score = 0;
+            let gameOver = false;
+            let keys = {}; // Object to track pressed keys
+            let isHakikjinActive = false; // True when Hakikjin ability is visually active (button pressed)
+            let isHakikjinUnlocked = false; // True when the 5-ship condition is met (enables full effect)
+            let hakikjinUnlockMessageShown = false; // Prevents showing unlock message repeatedly
+            let gamePaused = false; // Controls game loop pause state
+
+            let playerInitialX;
+            let playerInitialY;
+            let animationFrameId; // To store requestAnimationFrame ID for controlling game loop
+
+            // DOM element references - Assigned once DOM is ready
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+
+            const messageBox = document.getElementById('messageBox');
+            const messageTitle = document.getElementById('messageTitle');
+            const messageText = document.getElementById('messageText');
+            const continueButton = document.getElementById('continueButton');
+            const restartButton = document.getElementById('restartButton');
+            const infoOkButton = document.getElementById('infoOkButton');
+            const hakikjinControlText = document.getElementById('hakikjin-control-text');
+            const hakikjinStatusDisplay = document.getElementById('hakikjin-status');
+
+            const btnUp = document.getElementById('btnUp');
+            const btnDown = document.getElementById('btnDown');
+            const btnLeft = document.getElementById('btnLeft');
+            const btnRight = document.getElementById('btnRight');
+            const btnHakikjin = document.getElementById('btnHakikjin');
+
+
+            // Message Box Functions - Defined as const arrow functions at the top of DOMContentLoaded
+            const showMessageBox = (title, text, showContinue = false, showRestart = false, showInfoOk = false) => {
+                if (!messageBox || !messageTitle || !messageText || !continueButton || !restartButton || !infoOkButton) {
+                    console.error("MessageBox DOM elements are not fully loaded or assigned in showMessageBox!");
+                    return; 
+                }
+                messageTitle.textContent = title;
+                messageText.textContent = text;
+                continueButton.style.display = showContinue ? 'inline-block' : 'none';
+                restartButton.style.display = showRestart ? 'inline-block' : 'none';
+                infoOkButton.style.display = showInfoOk ? 'inline-block' : 'none';
+                messageBox.style.display = 'block';
+                gamePaused = true; // Pause game when message box is shown
+                console.log(`DEBUG: Message Box Shown - Title: "${title}", Text: "${text}"`);
+            };
+
+            const hideMessageBox = () => {
+                if (!messageBox) return;
+                messageBox.style.display = 'none';
+                gamePaused = false; // Resume game when message box is hidden
+                console.log("DEBUG: Message Box Hidden. Game Resumed.");
+            };
+
+            // Helper function for point in triangle check (used for Hakikjin collision)
+            const sign = (p1, p2, p3) => {
+                return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
+            };
+
+            // Function to check if a point (enemy ship) is inside a triangle (Hakikjin formation)
+            const isPointInTriangle = (pt, v1, v2, v3) => {
+                const d1 = sign(pt, v1, v2);
+                const d2 = sign(pt, v2, v3);
+                const d3 = sign(pt, v3, v1);
+                const has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+                const has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+                return !(has_neg && has_pos); // True if point is inside triangle
+            };
+
+            // Ship Class Definition (defines properties and drawing logic for all ships)
+            class Ship {
+                constructor(x, y, width, height, color, type = 'normal') {
+                    this.x = x;
+                    this.y = y;
+                    this.width = width;
+                    this.height = height;
+                    this.color = color;
+                    this.type = type; // 'player', 'allied', 'enemy'
+                    this.destroyed = false; // Flag if ship is destroyed
+                }
+
+                draw() {
+                    if (this.destroyed) return; // Don't draw destroyed ships
+
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+
+                    if (this.type === 'player') {
+                        // Custom drawing for player ship (Turtle Ship style)
+                        const bodyWidth = this.width;
+                        const bodyHeight = this.height * 0.8;
+                        const headLength = this.width * 0.4;
+                        const tailLength = this.width * 0.3;
+                        const roofHeight = this.height * 0.6;
+
+                        ctx.fillRect(this.x - bodyWidth / 2, this.y - bodyHeight / 2, bodyWidth, bodyHeight);
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y - bodyHeight / 2, bodyWidth / 2, Math.PI, 2 * Math.PI, false); // Front curve
+                        ctx.fill();
+
+                        // Head
+                        ctx.beginPath();
+                        ctx.moveTo(this.x - bodyWidth / 2, this.y - bodyHeight / 4);
+                        ctx.lineTo(this.x - bodyWidth / 2 - headLength, this.y - bodyHeight / 2);
+                        ctx.lineTo(this.x - bodyWidth / 2 - headLength, this.y + bodyHeight / 2);
+                        ctx.lineTo(this.x - bodyWidth / 2, this.y + bodyHeight / 4);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        // Tail
+                        ctx.beginPath();
+                        ctx.moveTo(this.x + bodyWidth / 2, this.y - bodyHeight / 4);
+                        ctx.lineTo(this.x + bodyWidth / 2 + tailLength, this.y - bodyHeight / 2);
+                        ctx.lineTo(this.x + bodyWidth / 2 + tailLength, this.y + bodyHeight / 2);
+                        ctx.lineTo(this.x + bodyWidth / 2, this.y + bodyHeight / 4);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        ctx.fillStyle = '#616161';
+                        ctx.fillRect(this.x - 2, this.y - bodyHeight / 2 - roofHeight, 4, roofHeight);
+
+                        // Korean Flag (Image)
+                        if (isFlagImageLoaded) {
+                            const flagWidth = 16;
+                            const flagHeight = 10;
+                            const flagOffsetX = bodyWidth / 2 - flagWidth - 5; // Position flag to the right of the mast
+                            const flagOffsetY = -bodyHeight / 2 - roofHeight - flagHeight - 5;
+                            ctx.drawImage(koreanFlagImage, this.x + flagOffsetX, this.y + flagOffsetY, flagWidth, flagHeight);
+                        } else {
+                            // Fallback to drawing simple Taegeukgi if image fails (simplified for quick drawing)
+                            const flagSize = 12;
+                            const flagX = this.x + bodyWidth / 2 - flagSize - 5;
+                            const flagY = this.y - bodyHeight / 2 - roofHeight - flagSize - 5;
+
+                            ctx.save();
+                            ctx.translate(flagX + flagSize / 2, flagY + flagSize / 2);
+                            ctx.rotate(Math.PI / 12); // Slightly rotate flag
+                            ctx.translate(-(flagX + flagSize / 2), -(flagY + flagSize / 2));
+
+                            ctx.fillStyle = '#A0522D'; // Mast color
+                            ctx.fillRect(flagX + flagSize / 2 - 1, flagY, 2, flagSize + 5); // Mast
+
+                            ctx.fillStyle = '#FFFFFF';
+                            ctx.fillRect(flagX, flagY, flagSize, flagSize); // Flag base
+
+                            const taegeukRadius = flagSize / 3;
+                            ctx.beginPath(); // Red part
+                            ctx.arc(flagX + flagSize / 2, flagY + flagSize / 2 + taegeukRadius / 2, taegeukRadius / 2, 0, Math.PI, true);
+                            ctx.arc(flagX + flagSize / 2, flagY + flagSize / 2 - taegeukRadius / 2, taegeukRadius / 2, 0, Math.PI);
+                            ctx.fillStyle = '#FF0000';
+                            ctx.fill();
+
+                            ctx.beginPath(); // Blue part
+                            ctx.arc(flagX + flagSize / 2, flagY + flagSize / 2 + taegeukRadius / 2, taegeukRadius / 2, 0, Math.PI);
+                            ctx.arc(flagX + flagSize / 2, flagY + flagSize / 2 - taegeukRadius / 2, taegeukRadius / 2, 0, Math.PI, true);
+                            ctx.fillStyle = '#0000FF';
+                            ctx.fill();
+
+                            ctx.restore();
+
+                            // Trigrams (simplified lines)
+                            ctx.strokeStyle = '#000000';
+                            ctx.lineWidth = 1;
+
+                            // Geon (☰)
+                            ctx.beginPath();
+                            ctx.moveTo(flagX + flagSize * 0.1, flagY + flagSize * 0.2); ctx.lineTo(flagX + flagSize * 0.4, flagY + flagSize * 0.2);
+                            ctx.moveTo(flagX + flagSize * 0.1, flagY + flagSize * 0.25); ctx.lineTo(flagX + flagSize * 0.4, flagY + flagSize * 0.25);
+                            ctx.moveTo(flagX + flagSize * 0.1, flagY + flagSize * 0.3); ctx.lineTo(flagX + flagSize * 0.4, flagY + flagSize * 0.3);
+                            ctx.stroke();
+
+                            // Gon (☷)
+                            ctx.beginPath();
+                            ctx.moveTo(flagX + flagSize * 0.6, flagY + flagSize * 0.7); ctx.lineTo(flagX + flagSize * 0.9, flagY + flagSize * 0.7);
+                            ctx.moveTo(flagX + flagSize * 0.65, flagY + flagSize * 0.75); ctx.lineTo(flagX + flagSize * 0.85, flagY + flagSize * 0.75);
+                            ctx.moveTo(flagX + flagSize * 0.6, flagY + flagSize * 0.8); ctx.lineTo(flagX + flagSize * 0.9, flagY + flagSize * 0.8);
+                            ctx.stroke();
+                        }
+                    } else if (this.type === 'allied') {
+                        // Drawing for allied Korean ships
+                        const bodyWidth = this.width;
+                        const bodyHeight = this.height * 0.7;
+                        const deckHeight = this.height * 0.3;
+
+                        ctx.fillRect(this.x - bodyWidth / 2, this.y - bodyHeight / 2, bodyWidth, bodyHeight); // Main body
+                        ctx.fillRect(this.x - bodyWidth / 3, this.y - bodyHeight / 2 - deckHeight, bodyWidth * 2 / 3, deckHeight); // Deck
+
+                        ctx.fillStyle = '#C0C0C0'; // Mast color
+                        ctx.beginPath(); // Mast
+                        ctx.moveTo(this.x, this.y - bodyHeight / 2 - deckHeight);
+                        ctx.lineTo(this.x - bodyWidth / 3, this.y - bodyHeight / 2 - deckHeight - bodyHeight * 0.5);
+                        ctx.lineTo(this.x + bodyWidth / 3, this.y - bodyHeight / 2 - deckHeight - bodyHeight * 0.5);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        ctx.fillStyle = '#FFD700'; // Flag on allied ship
+                        ctx.fillRect(this.x + bodyWidth / 4, this.y - bodyHeight / 2 - deckHeight - bodyHeight * 0.5 - 10, 5, 10);
+
+                    } else if (this.type === 'enemy') {
+                        // Drawing for Japanese enemy ships
+                        const bodyWidth = this.width;
+                        const bodyHeight = this.height * 0.7;
+                        const towerHeight = this.height * 0.5;
+                        const towerWidth = this.width * 0.6;
+
+                        ctx.fillStyle = this.color;
+                        ctx.fillRect(this.x - bodyWidth / 2, this.y - bodyHeight / 2, bodyWidth, bodyHeight); // Main body
+                        ctx.fillRect(this.x - towerWidth / 2, this.y - bodyHeight / 2 - towerHeight, towerWidth, towerHeight); // Tower
+
+                        ctx.fillStyle = '#FFFFFF'; // Flag base
+                        ctx.fillRect(this.x + towerWidth / 2 - 10, this.y - bodyHeight / 2 - towerHeight - 15, 15, 10);
+                        ctx.fillStyle = '#FF0000'; // Red circle for Japanese flag (Hinomaru)
+                        ctx.beginPath();
+                        ctx.arc(this.x + towerWidth / 2 - 3, this.y - bodyHeight / 2 - towerHeight - 10, 4, 0, Math.PI * 2, true);
+                        ctx.fill();
+                    }
+                }
+
+                // Enemy ship AI (random movement within upper half of canvas)
+                updateEnemy() {
+                    if (this.destroyed) return;
+                    this.x += (Math.random() - 0.5) * ENEMY_SPEED * 2;
+                    this.y += (Math.random() - 0.5) * ENEMY_SPEED * 2;
+                    // Keep enemies within canvas bounds and upper half
+                    if (this.x < 0) this.x = 0;
+                    if (this.x > GAME_WIDTH) this.x = GAME_WIDTH;
+                    if (this.y < 0) this.y = 0;
+                    if (this.y > GAME_HEIGHT / 2) this.y = GAME_HEIGHT / 2;
+                }
+
+                // Simple collision detection (axis-aligned bounding box)
+                collidesWith(otherShip) {
+                    if (this.destroyed || otherShip.destroyed) return false;
+                    return this.x - this.width / 2 < otherShip.x + otherShip.width / 2 &&
+                           this.x + this.width / 2 > otherShip.x - otherShip.width / 2 &&
+                           this.y - this.height / 2 < otherShip.y + otherShip.height / 2 &&
+                           this.y + this.height / 2 > otherShip.y - otherShip.height / 2;
+                }
+            }
+
+            // Game Initialization Function
+            function initGame() {
+                score = 0;
+                gameOver = false;
+                keys = {};
+                isHakikjinActive = false;
+                isHakikjinUnlocked = false; 
+                hakikjinUnlockMessageShown = false;
+                gamePaused = false;
+                
+                player = new Ship(GAME_WIDTH / 2, GAME_HEIGHT - 50, 25, 40, '#00bcd4', 'player');
+                playerInitialX = player.x; // Store initial player position
+                playerInitialY = player.y;
+
+                alliedShips = [];
+                // Create allied ships, positioned relative to player initially
+                for (let i = 0; i < 3; i++) {
+                    // Left side allied ships
+                    alliedShips.push(new Ship(player.x - (i + 1) * ALLIED_BASE_OFFSET_X, player.y + ALLIED_BASE_OFFSET_Y + i * 10, 20, 30, '#4CAF50', 'allied'));
+                    // Right side allied ships
+                    alliedShips.push(new Ship(player.x + (i + 1) * ALLIED_BASE_OFFSET_X, player.y + ALLIED_BASE_OFFSET_Y + i * 10, 20, 30, '#4CAF50', 'allied'));
+                }
+
+                enemyShips = [];
+                // Initial enemy ships
+                for (let i = 0; i < ENEMY_INITIAL_COUNT; i++) {
+                    enemyShips.push(new Ship(
+                        Math.random() * GAME_WIDTH,
+                        Math.random() * (GAME_HEIGHT / 2), // Spawn in upper half
+                        22, 35, '#f44336', 'enemy'
+                    ));
+                }
+
+                updateStatusBar(); // Update UI display
+                updateControlText(); // Update control instructions
+                hideMessageBox(); // Ensure no message box is shown at start
+                updateMobileControlButtons(); // Update mobile button states
+                updateCanvasBorder(); // Update canvas border on game start
+                console.log("DEBUG: Game Initialized.");
+            }
+
+            // Starts the game loop
+            function startGame() {
+                initGame(); // Initialize game state
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId); // Clear any existing game loop
+                }
+                animationFrameId = requestAnimationFrame(gameLoop); // Start new game loop
+                console.log("DEBUG: Game Started.");
+            }
+
+            // Main game loop
+            function gameLoop() {
+                if (gameOver || gamePaused) {
+                    animationFrameId = requestAnimationFrame(gameLoop); // Keep looping to check for unpause/restart
+                    return; // Skip drawing/updating if paused or game over
+                }
+
+                // Set canvas transform for drawing, considering scaling
+                ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+                const scaleX = canvas.width / GAME_WIDTH;
+                const scaleY = canvas.height / GAME_HEIGHT;
+                ctx.scale(scaleX, scaleY);
+
+                ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT); // Clear canvas
+
+                updateGame(); // Update game state
+                drawGame();   // Draw game elements
+
+                animationFrameId = requestAnimationFrame(gameLoop); // Request next frame
+            }
+
+            // Updates game state (movement, collisions, scoring)
+            function updateGame() {
+                // Player movement based on pressed keys
+                if (keys['ArrowUp'] || keys['w']) player.y -= PLAYER_SPEED;
+                if (keys['ArrowDown'] || keys['s']) player.y += PLAYER_SPEED;
+                if (keys['ArrowLeft'] || keys['a']) player.x -= PLAYER_SPEED;
+                if (keys['ArrowRight'] || keys['d']) player.x += PLAYER_SPEED;
+
+                // Player boundary checks
+                if (player.x < player.width / 2) player.x = player.width / 2;
+                if (player.x > GAME_WIDTH - player.width / 2) player.x = GAME_WIDTH - player.width / 2;
+                if (player.y < player.height / 2) player.y = player.height / 2;
+                if (player.y > GAME_HEIGHT - player.height / 2) player.y = GAME_HEIGHT - player.height / 2;
+
+                // Allied ship movement and formation
+                alliedShips.forEach((ship, index) => {
+                    const side = index % 2 === 0 ? -1 : 1; // Alternating left/right
+                    const offsetMultiplier = Math.floor(index / 2) + 1; // For spreading out ships
+
+                    let targetX = player.x + side * (ALLIED_BASE_OFFSET_X + (isHakikjinActive ? ALLIED_SPREAD_DISTANCE : 0)) * offsetMultiplier;
+                    let targetY = player.y + ALLIED_BASE_OFFSET_Y;
+
+                    if (isHakikjinActive) {
+                        // When Hakikjin is active, allied ships spread out and move slightly forward
+                        targetY = player.y + ALLIED_BASE_OFFSET_Y - (ALLIED_SPREAD_DISTANCE * (offsetMultiplier / 3));
+                    }
+
+                    // Move allied ship towards target position
+                    ship.x += (targetX - ship.x) * ALLIED_FOLLOW_SPEED;
+                    ship.y += (targetY - ship.y) * ALLIED_FOLLOW_SPEED;
+                });
+
+                // Enemy ship movement
+                enemyShips.forEach(enemy => enemy.updateEnemy());
+
+                // Collision detection logic
+                enemyShips.forEach(enemy => {
+                    if (enemy.destroyed) return; // Skip already destroyed enemies
+
+                    const isCollidingWithPlayer = player.collidesWith(enemy);
+
+                    if (!isHakikjinUnlocked) { // PHASE 1: Before Hakikjin is fully unlocked (score < 5)
+                        // In Phase 1, enemies are destroyed by direct collision with player
+                        // console.log(`DEBUG (P1): Enemy ID: ${enemyShips.indexOf(enemy)}. Pos: (${enemy.x.toFixed(0)}, ${enemy.y.toFixed(0)}). Player Pos: (${player.x.toFixed(0)}, ${player.y.toFixed(0)}). Collision: ${isCollidingWithPlayer}.`);
+                        if (isCollidingWithPlayer) {
+                            enemy.destroyed = true;
+                            score++;
+                            console.log(`DEBUG: Phase 1 - Enemy DESTROYED by direct collision. Score: ${score}`);
+                        }
+                    } else { // PHASE 2: After Hakikjin is fully unlocked (score >= 5)
+                        // In Phase 2, enemies are destroyed ONLY by Hakikjin formation when button is active.
+                        // Direct collision alone will NOT destroy enemies here.
+                        if (isHakikjinActive && alliedShips.length >= 2) {
+                            const tempAlliedSortedX = [...alliedShips].sort((a, b) => a.x - b.x);
+                            const leftWingTip = tempAlliedSortedX[0];
+                            const rightWingTip = tempAlliedSortedX[tempAlliedSortedX.length - 1];
+
+                            // Define the three vertices of the Hakikjin triangle for collision
+                            const hakikjin_v1 = { x: player.x, y: player.y - player.height / 2 }; // Front of player ship
+                            const hakikjin_v2 = { x: leftWingTip.x - leftWingTip.width / 2, y: leftWingTip.y - leftWingTip.height / 2 }; // Front-left of left wingtip
+                            const hakikjin_v3 = { x: rightWingTip.x + rightWingTip.width / 2, y: rightWingTip.y - rightWingTip.height / 2 }; // Front-right of right wingtip
+
+                            const isEnemyInFormation = isPointInTriangle({ x: enemy.x, y: enemy.y }, hakikjin_v1, hakikjin_v2, hakikjin_v3);
+                            
+                            // console.log(`DEBUG (P2): Enemy ID: ${enemyShips.indexOf(enemy)}. Pos: (${enemy.x.toFixed(0)}, ${enemy.y.toFixed(0)}). Hakikjin Active: ${isHakikjinActive}. In Formation: ${isEnemyInFormation}.`);
+
+                            if (isEnemyInFormation) {
+                                enemy.destroyed = true;
+                                score++; // Increment score for Hakikjin kill
+                                console.log(`DEBUG: Phase 2 - Enemy DESTROYED by Hakikjin formation. Score: ${score}`);
+                            }
+                        } else if (isCollidingWithPlayer) {
+                            console.log(`DEBUG: Phase 2 - Direct collision detected, but direct attack is DISABLED. Enemy NOT destroyed.`);
+                        } else if (!isHakikjinActive) {
+                            // console.log(`DEBUG: Phase 2 - Hakikjin button NOT active. Enemy not destroyed.`);
+                        }
+                    }
+                });
+
+                // Hakikjin unlock, player reset, and reinforcement logic
+                if (score >= HAKIKJIN_UNLOCK_SCORE && !hakikjinUnlockMessageShown) {
+                    isHakikjinUnlocked = true; // Mark Hakikjin as fully unlocked (its gameplay effect)
+                    hakikjinUnlockMessageShown = true; // Prevent multiple messages
+                    
+                    // Show message box with 'Continue' button to pause and allow user to read
+                    showMessageBox("학익진 기술 활성화!", `적선 ${HAKIKJIN_UNLOCK_SCORE}척 격파! 학익진 기술을 사용할 수 있습니다! 이순신 장군 함선이 본대 위치로 복귀합니다. 적 증원군 ${ENEMY_REINFORCEMENT_COUNT}척이 도착했습니다!`, true, false, false);
+                    
+                    // When Hakikjin is unlocked and message is shown, reset player position
+                    player.x = playerInitialX;
+                    player.y = playerInitialY;
+
+                    // Add reinforcements (clear existing enemies and add new ones)
+                    enemyShips = []; // Clear existing enemies (both destroyed and not destroyed)
+                    for (let i = 0; i < ENEMY_REINFORCEMENT_COUNT; i++) {
+                        enemyShips.push(new Ship(
+                            Math.random() * GAME_WIDTH,
+                            Math.random() * (GAME_HEIGHT / 2),
+                            22, 35, '#f44336', 'enemy'
+                        ));
+                    }
+                    console.log(`DEBUG: Hakikjin unlocked and reinforcements added. New enemy count: ${enemyShips.length}`);
+                }
+                
+                // Game Over (Victory) condition
+                const remainingEnemiesTotal = enemyShips.filter(enemy => !enemy.destroyed).length;
+                if (remainingEnemiesTotal === 0 && hakikjinUnlockMessageShown) {
+                    // Check if all enemies (initial + reinforcements) are destroyed AND Hakikjin was unlocked
+                    gameOver = true;
+                    // Show victory message with 'Restart' button
+                    showMessageBox("승리!", `모든 적선을 격파했습니다! 당신은 진정한 이순신 장군입니다!`, false, true, false);
+                    console.log(`DEBUG: Game Over - Victory! Score: ${score}`);
+                }
+
+                updateStatusBar(); // Update the score and status displays
+                updateControlText(); // Ensure controls text updates dynamically
+                updateCanvasBorder(); // Update canvas border based on Hakikjin active state
+            }
+
+            // Draws all game elements on the canvas
+            function drawGame() {
+                player.draw();
+                alliedShips.forEach(ship => ship.draw());
+                enemyShips.forEach(enemy => enemy.draw());
+
+                // Draw Hakikjin formation lines if ability is active
+                // (even before full unlock, to show the intended formation)
+                if (isHakikjinActive && alliedShips.length >= 2) {
+                    // Get the outermost allied ships to form the triangle
+                    const tempAlliedSortedX = [...alliedShips].sort((a, b) => a.x - b.x);
+                    const leftWingTip = tempAlliedSortedX[0];
+                    const rightWingTip = tempAlliedSortedX[tempAlliedSortedX.length - 1];
+
+                    // Coordinates for drawing lines (front of ships)
+                    const v_player_draw = { x: player.x, y: player.y - player.height / 2 };
+                    const v_left_wing_draw = { x: leftWingTip.x - leftWingTip.width / 2, y: leftWingTip.y - leftWingTip.height / 2 };
+                    const v_right_wing_draw = { x: rightWingTip.x + rightWingTip.width / 2, y: rightWingTip.y - rightWingTip.height / 2 };
+
+                    ctx.strokeStyle = '#00ffff'; // Cyan color for Hakikjin lines
+                    ctx.lineWidth = 2; // Line thickness
+                    ctx.beginPath();
+                    ctx.moveTo(v_player_draw.x, v_player_draw.y);       // From player to left wing
+                    ctx.lineTo(v_left_wing_draw.x, v_left_wing_draw.y);
+                    ctx.lineTo(v_right_wing_draw.x, v_right_wing_draw.y); // From left wing to right wing
+                    ctx.closePath(); // Connects right wing back to player, forming a triangle
+                    ctx.stroke(); // Draw the lines
+                }
+            }
+
+            // Updates the text in the status bar
+            function updateStatusBar() {
+                hakikjinStatusDisplay.textContent = `학익진 기술: ${isHakikjinUnlocked ? 'O' : 'X'}`;
+                document.getElementById('score').textContent = `격파한 적선: ${score}`;
+                document.getElementById('remaining-enemies').textContent = `남은 적선: ${enemyShips.filter(e => !e.destroyed).length}`;
+            }
+
+            // Updates the instructional text for controls
+            function updateControlText() {
+                if (!isHakikjinUnlocked) {
+                    hakikjinControlText.innerHTML = `이동 키 또는 터치 패드로 적선에 <span class="text-red-500 font-bold">직접 부딪혀 격파</span>하세요.`;
+                } else {
+                    hakikjinControlText.innerHTML = `<span class="key-button">Spacebar</span> 또는 '학익진!' 버튼을 눌러 학익진을 펼치고 적선을 <span class="text-cyan-400 font-bold">포위하여 격파</span>하세요! (<span class="text-red-500 font-bold">직접 부딪히는 공격은 효과가 없습니다!</span>)`;
+                }
+            }
+
+            // Updates the visual state of the mobile Hakikjin button (always active now)
+            function updateMobileControlButtons() {
+                // The button is now always available to press.
+                // Its visual 'inactive' state is removed based on user feedback.
+                btnHakikjin.classList.remove('inactive'); 
+            }
+
+            // Adds or removes a class from the canvas based on isHakikjinActive
+            function updateCanvasBorder() {
+                if (canvas) { // Ensure canvas element exists
+                    if (isHakikjinActive) {
+                        canvas.classList.add('hakikjin-active-border');
+                    } else {
+                        canvas.classList.remove('hakikjin-active-border');
+                    }
+                }
+            }
+            
+            // Responsive Canvas Resizing: Adjusts canvas and container size based on window dimensions
+            function resizeCanvas() {
+                const gameContainer = document.querySelector('.game-container');
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+
+                const aspectRatio = GAME_WIDTH / GAME_HEIGHT; // Desired game aspect ratio
+
+                let targetWidth = GAME_WIDTH;
+                let targetHeight = GAME_HEIGHT;
+
+                const horizontalPadding = 40; // Total horizontal padding for game container
+                // Estimated vertical space needed by status bar, info button, and controls area
+                // More space reserved for mobile if on smaller screens to prevent content overlap
+                const verticalReservedSpace = window.innerWidth <= 768 ? 160 : 120; 
+
+                const availableWidth = windowWidth - horizontalPadding;
+                const availableHeight = windowHeight - verticalReservedSpace;
+
+                // Calculate target dimensions while maintaining aspect ratio and fitting available space
+                if (availableWidth / aspectRatio < availableHeight) {
+                    targetWidth = availableWidth;
+                    targetHeight = availableWidth / aspectRatio;
+                } else {
+                    targetHeight = availableHeight;
+                    targetWidth = availableHeight * aspectRatio;
+                }
+
+                // Ensure canvas doesn't exceed original defined game dimensions
+                if (targetWidth > GAME_WIDTH) targetWidth = GAME_WIDTH;
+                if (targetHeight > GAME_HEIGHT) targetHeight = GAME_HEIGHT;
+
+                // Apply calculated dimensions to canvas
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+
+                // Adjust game container size
+                gameContainer.style.width = `${targetWidth + horizontalPadding}px`;
+                gameContainer.style.height = `${targetHeight + verticalReservedSpace - 40}px`; // Fine-tuning for container height
+
+                // Center the canvas visually within its container
+                canvas.style.marginLeft = `${(gameContainer.clientWidth - canvas.width) / 2}px`;
+                canvas.style.marginTop = `${(gameContainer.clientHeight - canvas.height - (verticalReservedSpace - 40)) / 2}px`;
+            }
+
+
+            // ===========================================
+            // Event Listeners for Game Controls and UI
+            // ===========================================
+            
+            // Message Box Button Event Listeners
+            // When continue button is clicked, hide the message and allow game to resume
+            continueButton.addEventListener('click', () => { hideMessageBox(); });
+            // When restart button is clicked, hide message and restart the game
+            restartButton.addEventListener('click', () => { hideMessageBox(); startGame(); });
+            // When info OK button is clicked, just hide the message
+            infoOkButton.addEventListener('click', () => { hideMessageBox(); });
+
+            // Dynamically insert Info button if it doesn't already exist (prevents duplicates on hot reload)
+            if (!document.getElementById('infoButton')) {
+                const infoButtonHtml = `
+                    <button id="infoButton" class="absolute top-4 right-4 bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-full shadow-lg transition-colors duration-200" title="게임 정보">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                     </button>
-                    <button
-                      onClick={nextQuestion}
-                      className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-5 rounded-xl shadow-md transition duration-300 transform hover:scale-105 active:scale-95"
-                    >
-                      다음 문제
-                    </button>
-                  </div>
-                  {showQuizResult && (
-                    <p className={`mt-4 text-xl font-bold ${quizFeedback.includes('정답입니다') ? 'text-green-700' : 'text-red-700'}`}>
-                      {quizFeedback}
-                    </p>
-                  )}
-                </div>
-              </div>
+                `;
+                // Insert the info button at the beginning of the game-container
+                document.querySelector('.game-container').insertAdjacentHTML('afterbegin', infoButtonHtml); 
+            }
+            // Attach event listener to the Info button
+            document.getElementById('infoButton').addEventListener('click', () => {
+                showMessageBox(
+                    '학익진 (鶴翼陣) 전술 게임 방법',
+                    '🎯 게임 목표:\n• 학익진 진형을 형성하여 일본 함대를 격파하세요\n\n📋 게임 방법:\n1. 적선 5척을 격파하여 학익진 기술을 활성화하세요.\n2. 학익진 기술 발동 후, 함선을 조작하여 적선을 포위하고 섬멸하세요.\n\n🎮 조작법:\n• PC: WASD 또는 화살표 키\n• 모바일: 화면 하단 방향 버튼\n• 학익진 기술: 스페이스바 또는 기술 버튼\n\n⚔️ 학익진의 장점:\n• 적함을 포위하여 퇴로 차단\n• 다각도에서 집중 공격 가능\n• 전장 주도권 확보\n• 넓은 범위 동시 격파',
+                    false, false, true // Parameters: no continue, no restart, show info OK button
+                );
+            });
 
-              {isAuthReady && (
-                <p className="mt-8 text-sm text-gray-500 text-center">
-                  사용자 ID: {userId}
-                </p>
-              )}
-            </div>
-          </div>
-        </>
-      );
-    }
 
-    ReactDOM.render(<App />, document.getElementById('root'));
-  </script>
+            // Keyboard input listeners: update `keys` object on key press/release
+            document.addEventListener('keydown', (e) => {
+                keys[e.key] = true;
+                // Prevent default behavior for spacebar (e.g., page scrolling)
+                if (e.key === ' ' || e.key === 'Spacebar') {
+                    e.preventDefault();
+                    // Activate Hakikjin visually if not paused
+                    if (!gamePaused) {
+                        isHakikjinActive = true;
+                        updateCanvasBorder(); // Update border immediately
+                    }
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                keys[e.key] = false;
+                // Deactivate Hakikjin when spacebar is released
+                if (e.key === ' ' || e.key === 'Spacebar') {
+                    isHakikjinActive = false;
+                    updateCanvasBorder(); // Update border immediately
+                }
+            });
+
+            // Mobile touch controls setup: Attach touch and mouse events to D-pad buttons
+            function setupButtonControls(button, keyName) {
+                // `touchstart` and `touchend` for mobile touch devices
+                button.addEventListener('touchstart', (e) => {
+                    e.preventDefault(); // Prevent default touch behavior (e.g., scrolling)
+                    if (!gamePaused) keys[keyName] = true;
+                }, { passive: false }); // `passive: false` allows `preventDefault`
+                button.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    keys[keyName] = false;
+                });
+                // `mousedown`, `mouseup`, `mouseleave` for mouse input (e.g., on hybrid devices or testing in browser)
+                button.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    if (!gamePaused) keys[keyName] = true;
+                });
+                button.addEventListener('mouseup', (e) => {
+                    e.preventDefault();
+                    keys[keyName] = false;
+                });
+                button.addEventListener('mouseleave', (e) => {
+                    keys[keyName] = false;
+                });
+            }
+
+            // Assign controls to respective buttons
+            setupButtonControls(btnUp, 'ArrowUp');
+            setupButtonControls(btnDown, 'ArrowDown');
+            setupButtonControls(btnLeft, 'ArrowLeft');
+            setupButtonControls(btnRight, 'ArrowRight');
+
+            // Hakikjin action button for mobile
+            btnHakikjin.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (!gamePaused) { // Allow visual activation even if not fully unlocked
+                    isHakikjinActive = true;
+                    updateCanvasBorder(); // Update border immediately
+                }
+            }, { passive: false });
+            btnHakikjin.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                isHakikjinActive = false;
+                updateCanvasBorder(); // Update border immediately
+            });
+            btnHakikjin.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                if (!gamePaused) {
+                    isHakikjinActive = true;
+                    updateCanvasBorder(); // Update border immediately
+                }
+            });
+            btnHakikjin.addEventListener('mouseup', (e) => {
+                e.preventDefault();
+                isHakikjinActive = false;
+                updateCanvasBorder(); // Update border immediately
+            });
+            btnHakikjin.addEventListener('mouseleave', (e) => {
+                isHakikjinActive = false;
+                updateCanvasBorder(); // Update border immediately
+            });
+
+            // Prevent default touch behavior on canvas to avoid scrolling/zooming
+            canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+            canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+            canvas.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
+
+            // Initial setup: resize canvas, start game, and attach resize listener
+            resizeCanvas(); // Set initial canvas size
+            startGame(); // Begin the game
+            window.addEventListener('resize', resizeCanvas); // Adjust canvas size on window resize
+        }); // End of DOMContentLoaded
+    </script>
 </body>
 </html>
